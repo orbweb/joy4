@@ -257,7 +257,7 @@ func (self *Stream) payloadEnd() (n int, err error) {
 					n++
 					fmt.Println("nal data: ")
 				case naltype == 6:
-					fmt.Println("nal 6: ")
+					fmt.Println("nal 6: ", len(nalu), " string: ", string(nalu))
 				}
 			}
 		}
