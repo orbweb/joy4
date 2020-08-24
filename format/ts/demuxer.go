@@ -244,8 +244,10 @@ func (self *Stream) payloadEnd() (n int, err error) {
 				switch {
 				case naltype == 7:
 					sps = nalu
+					fmt.Println("nal sps: ")
 				case naltype == 8:
 					pps = nalu
+					fmt.Println("nal pps: ")
 				case h264parser.IsDataNALU(nalu):
 					// raw nalu to avcc
 					b := make([]byte, 4+len(nalu))
@@ -253,6 +255,9 @@ func (self *Stream) payloadEnd() (n int, err error) {
 					copy(b[4:], nalu)
 					self.addPacket(b, time.Duration(0))
 					n++
+					fmt.Println("nal data: ")
+				case naltype == 6:
+					fmt.Println("nal 6: ")
 				}
 			}
 		}
