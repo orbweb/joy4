@@ -183,7 +183,7 @@ func (self *Demuxer) readTSPacket() (err error) {
 	return
 }
 
-func (self *Stream) addPacket(payload []byte, timedelta time.Duration) {
+func (self *Stream) addPacket(payload []byte, timedelta time.Duration, userdata string) {
 	dts := self.dts
 	pts := self.pts
 	if dts == 0 {
@@ -196,11 +196,21 @@ func (self *Stream) addPacket(payload []byte, timedelta time.Duration) {
 		IsKeyFrame: self.iskeyframe,
 		Time: dts+timedelta,
 		Data: payload,
+		UserData: toUserData(userdata),
 	}
 	if pts != dts {
 		pkt.CompositionTime = pts-dts
 	}
 	demuxer.pkts = append(demuxer.pkts, pkt)
+}
+
+func toUserData(userdata string) *av.UserData {
+	if userdata == "" {
+		return nil
+	}
+	return &av.UserData{
+		Data: userdata[16:],
+	}
 }
 
 func (self *Stream) payloadEnd() (n int, err error) {
@@ -229,7 +239,7 @@ func (self *Stream) payloadEnd() (n int, err error) {
 					return
 				}
 			}
-			self.addPacket(payload[hdrlen:framelen], delta)
+			self.addPacket(payload[hdrlen:framelen], delta, "")
 			n++
 			delta += time.Duration(samples) * time.Second / time.Duration(config.SampleRate)
 			payload = payload[framelen:]
@@ -238,6 +248,7 @@ func (self *Stream) payloadEnd() (n int, err error) {
 	case tsio.ElementaryStreamTypeH264:
 		nalus, _ := h264parser.SplitNALUs(payload)
 		var sps, pps []byte
+		userdata := ""
 		for _, nalu := range nalus {
 			if len(nalu) > 0 {
 				naltype := nalu[0] & 0x1f
@@ -253,11 +264,12 @@ func (self *Stream) payloadEnd() (n int, err error) {
 					b := make([]byte, 4+len(nalu))
 					pio.PutU32BE(b[0:4], uint32(len(nalu)))
 					copy(b[4:], nalu)
-					self.addPacket(b, time.Duration(0))
+					self.addPacket(b, time.Duration(0), userdata)
 					n++
 					fmt.Println("nal data: ")
+					userdata = ""
 				case naltype == 6:
-					fmt.Println("nal 6: ", len(nalu), " string: ", string(nalu))
+					userdata = string(nalu)
 				}
 			}
 		}

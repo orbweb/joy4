@@ -233,6 +233,12 @@ type Packet struct {
 	CompositionTime time.Duration // packet presentation time minus decode time for H264 B-Frame
 	Time time.Duration // packet decode time
 	Data            []byte // packet data
+	UserData        *UserData
+}
+
+type UserData struct {
+	Uuid string
+	Data string
 }
 
 // Raw audio frame.
