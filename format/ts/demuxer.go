@@ -209,7 +209,7 @@ func toUserData(userdata string) *av.UserData {
 		return nil
 	}
 	return &av.UserData{
-		Data: userdata[16:],
+		Data: userdata,
 	}
 }
 
